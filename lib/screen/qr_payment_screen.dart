@@ -1,33 +1,56 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../components/app_layout.dart';
+import '../util/color.dart';
+
 class QrPaymentScreen extends StatelessWidget {
   const QrPaymentScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('QR 결제')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+    return AppLayout(
+      title: 'QR 결제',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('참여자들에게 QR 코드를 보여주세요.', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 20),
+            const Text('참여자들에게 QR 코드를 보여주세요.', style: TextStyle(color: Colors.grey, fontSize: 15)),
+            const SizedBox(height: 24),
             Expanded(
               child: ListView(
                 children: [
-                  _buildQrRow('김나영', '12,500원', Colors.blue),
-                  _buildQrRow('김동현', '12,500원', Colors.green),
-                  _buildQrRow('박지민', '12,500원', Colors.purple),
-                  _buildQrRow('유지호', '12,500원', Colors.orange),
+                  _buildQrCard('김나영', '12,500원'),
+                  _buildQrCard('김동현', '12,500원'),
+                  _buildQrCard('박지민', '12,500원'),
+                  _buildQrCard('유지호', '12,500원'),
                 ],
               ),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/request'),
-              child: const Text('결제 링크 공유 및 복사'),
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('결제 링크 공유하기', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top : 16, bottom: 24),
+              child: ElevatedButton(
+                onPressed: () => Navigator.pushNamed(context, '/deposit_check_screen'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('정산 진행 상황 확인', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
             )
           ],
         ),
@@ -35,28 +58,33 @@ class QrPaymentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQrRow(String name, String amount, Color color) {
+  Widget _buildQrCard(String name, String amount) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: kCardShadow,
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              CircleAvatar(radius: 20, backgroundColor: color, child: Text(name[0], style: const TextStyle(color: Colors.white))),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(amount, style: const TextStyle(fontSize: 16)),
-                ],
-              )
-            ],
+          CircleAvatar(
+            backgroundColor: kPrimaryColor.withOpacity(0.1),
+            child: Text(name[0], style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
           ),
-          const Icon(Icons.qr_code_2, size: 48), // QR 코드 임시 아이콘
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 2),
+                Text(amount, style: const TextStyle(color: Colors.black87, fontSize: 15)),
+              ],
+            ),
+          ),
+          const Icon(Icons.qr_code_2, size: 40, color: Colors.black87),
         ],
       ),
     );
