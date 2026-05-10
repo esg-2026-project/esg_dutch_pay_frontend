@@ -53,7 +53,7 @@ class LandingScreen extends StatelessWidget {
                   children: [
                     // 버튼 영역
                     ElevatedButton(
-                      onPressed: () => Navigator.pushReplacementNamed(context, '/qr_scan'),
+                      onPressed: () => Navigator.pushNamed(context, '/qr_scan'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3B7BF6),
                         foregroundColor: Colors.white,
