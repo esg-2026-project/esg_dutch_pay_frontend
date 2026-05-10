@@ -1,14 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/util/string.dart';
 
 import '../components/app_layout.dart';
 import '../util/color.dart';
 
-class QrPaymentScreen extends StatelessWidget {
+class QrPaymentScreen extends StatefulWidget {
   const QrPaymentScreen({super.key});
 
   @override
+  State<StatefulWidget> createState() => _QrPaymentScreenState();
+}
+
+class _QrPaymentScreenState extends State<QrPaymentScreen> {
+  @override
   Widget build(BuildContext context) {
+    final participants = ModalRoute.of(context)!.settings.arguments as List<Map<String, dynamic>>;
+
     return AppLayout(
       title: 'QR 결제',
       child: Padding(
@@ -20,28 +28,13 @@ class QrPaymentScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Expanded(
               child: ListView(
-                children: [
-                  _buildQrCard('김나영', '12,500원'),
-                  _buildQrCard('김동현', '12,500원'),
-                  _buildQrCard('박지민', '12,500원'),
-                  _buildQrCard('유지호', '12,500원'),
-                ],
+                children: participants.map((element) {
+                  return _buildQrCard(element['name'], "${formatCurrency(element['amount'] as int)}원");
+                }).toList(),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor,
-                  minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('결제 링크 공유하기', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top : 16, bottom: 24),
+              padding: const EdgeInsets.only(top : 16),
               child: ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, '/deposit_check_screen'),
                 style: ElevatedButton.styleFrom(
@@ -51,7 +44,21 @@ class QrPaymentScreen extends StatelessWidget {
                 ),
                 child: const Text('정산 진행 상황 확인', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
               ),
-            )
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 24),
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black87,
+                  minimumSize: const Size(double.infinity, 54),
+                  side: BorderSide(color: Colors.grey[300]!),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('결제 링크 공유하기', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
         ),
       ),

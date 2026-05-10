@@ -1,14 +1,38 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../components/app_layout.dart';
 import '../util/color.dart';
+import '../util/string.dart';
 
-class SplitResultScreen extends StatelessWidget {
+class SplitResultScreen extends StatefulWidget {
   const SplitResultScreen({super.key});
 
   @override
+  State<StatefulWidget> createState() => _SplitResultScreenState();
+}
+
+class _SplitResultScreenState extends State<SplitResultScreen> {
+  int selectedRadio = 1;
+  final int totalAmount = 120000; // 총 결제 금액 고정값
+
+  // 참여자 상태 관리
+  List<Map<String, dynamic>> participants = [
+    {'name': '김나영', 'amount': 30000},
+    {'name': '김동현', 'amount': 30000},
+    {'name': '박지민', 'amount': 30000},
+    {'name': '유지호', 'amount': 30000},
+  ];
+
+
+  @override
   Widget build(BuildContext context) {
+    // [추가] 현재 입력된 금액의 합 계산
+    int currentSum = participants.fold(0, (sum, p) => sum + (p['amount'] as int));
+
+    // [추가] 직접 입력 모드이면서, 총합이 맞지 않을 때 에러 상태
+    bool isError = selectedRadio == 2 && currentSum != totalAmount;
+    int diff = totalAmount - currentSum; // 차액 계산
+
     return AppLayout(
       title: '정산 결과',
       child: SingleChildScrollView(
@@ -25,10 +49,10 @@ class SplitResultScreen extends StatelessWidget {
                 boxShadow: kCardShadow,
               ),
               child: Column(
-                children: const [
-                  Text('총 결제 금액', style: TextStyle(color: Colors.grey, fontSize: 15)),
-                  SizedBox(height: 8),
-                  Text('120,000원', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: kPrimaryColor)),
+                children: [
+                  const Text('총 결제 금액', style: TextStyle(color: Colors.grey, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  Text('${formatCurrency(totalAmount)}원', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: kPrimaryColor)),
                 ],
               ),
             ),
@@ -49,22 +73,21 @@ class SplitResultScreen extends StatelessWidget {
                     padding: EdgeInsets.only(left: 20, top: 12, bottom: 8),
                     child: Text('정산 방식 선택', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                  RadioListTile(
+                  _buildCustomRadio(
                     value: 1,
-                    groupValue: 1,
-                    onChanged: (v) {},
-                    activeColor: kPrimaryColor,
-                    title: const Text('균등 분할', style: TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: const Text('모든 인원이 동일한 금액을 냅니다.'),
+                    title: '균등 분할',
+                    description: '모든 인원이 동일한 금액을 냅니다.',
                   ),
-                  const Divider(height: 1, color: Color(0xFFF0F0F0)),
-                  RadioListTile(
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Divider(height: 1, color: Color(0xFFF0F0F0)),
+                  ),
+                  _buildCustomRadio(
                     value: 2,
-                    groupValue: 1,
-                    onChanged: (v) {},
-                    activeColor: kPrimaryColor,
-                    title: const Text('금액 직접 입력', style: TextStyle(fontWeight: FontWeight.w500)),
+                    title: '금액 직접 입력',
+                    description: '참여자별로 낼 금액을 직접 입력합니다.',
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -83,10 +106,40 @@ class SplitResultScreen extends StatelessWidget {
                 children: [
                   const Text('참여자별 정산 결과', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 16),
-                  _buildResultRow('김나영', '30,000원'),
-                  _buildResultRow('김동현', '30,000원'),
-                  _buildResultRow('박지민', '30,000원'),
-                  _buildResultRow('유지호', '30,000원'),
+
+                  // 참여자 리스트
+                  ...participants.map((person) => _buildResultRow(
+                      person['name'],
+                      person['amount'],
+                      canEdit: selectedRadio == 2
+                  )).toList(),
+
+                  // [핵심 추가] 에러 발생 시 붉은색 알림 박스 표시
+                  if (isError) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50, // 연한 붉은 배경
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade100),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red.shade400, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              diff > 0
+                                  ? '총 금액보다 ${formatCurrency(diff)}원 부족합니다.'
+                                  : '총 금액보다 ${formatCurrency(diff.abs())}원 초과되었습니다.',
+                              style: TextStyle(color: Colors.red.shade700, fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]
                 ],
               ),
             ),
@@ -94,14 +147,17 @@ class SplitResultScreen extends StatelessWidget {
 
             // 하단 버튼
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/qr_payment'),
+              // [추가] 에러가 있으면 버튼 비활성화 (null 전달)
+              onPressed: isError ? null : () => Navigator.pushNamed(context, '/qr_payment', arguments: participants),
               style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
+                // 에러 상태일 때는 버튼 색상을 회색으로 변경
+                backgroundColor: isError ? Colors.grey.shade300 : kPrimaryColor,
+                foregroundColor: isError ? Colors.grey.shade600 : Colors.white,
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text('결제 요청하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+              child: const Text('결제 요청하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
             const SizedBox(height: 20),
           ],
@@ -110,25 +166,181 @@ class SplitResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildResultRow(String name, String amount) {
+  // 바텀시트
+  void _showEditAmountBottomSheet(String name, int currentAmount) {
+    final TextEditingController controller = TextEditingController(text: currentAmount.toString());
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Container(
+              padding: EdgeInsets.only(
+                left: 24, right: 24, top: 32,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Material(
+                color: Colors.white,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('$name님의 금액 수정', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: controller,
+                      keyboardType: TextInputType.number,
+                      autofocus: true,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        suffixText: '원',
+                        suffixStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        filled: true,
+                        fillColor: const Color(0xFFF8F9FA),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          final index = participants.indexWhere((p) => p['name'] == name);
+                          participants[index]['amount'] = int.tryParse(controller.text) ?? 0;
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        minimumSize: const Size(double.infinity, 54),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text('수정 완료', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 행 구성
+  Widget _buildResultRow(String name, int amount, {bool canEdit = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: kPrimaryColor.withOpacity(0.1),
-                child: Text(name[0], style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 14)),
-              ),
-              const SizedBox(width: 12),
-              Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-            ],
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: kPrimaryColor.withOpacity(0.1),
+            child: Text(name[0], style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 14)),
           ),
-          Text(amount, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const SizedBox(width: 12),
+          Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          const Spacer(),
+          GestureDetector(
+            onTap: canEdit ? () => _showEditAmountBottomSheet(name, amount) : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                    '${formatCurrency(amount)}원',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)
+                ),
+                if (canEdit) ...[
+                  const SizedBox(width: 6),
+                  const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                ]
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // 라디오버튼
+  Widget _buildCustomRadio({required int value, required String title, required String description}) {
+    bool isSelected = selectedRadio == value;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          selectedRadio = value;
+          // [추가] '균등 분할'을 선택하면 금액을 자동으로 총합에 맞춰 초기화
+          if (selectedRadio == 1) {
+            int splitAmount = totalAmount ~/ participants.length;
+            for (var p in participants) {
+              p['amount'] = splitAmount;
+            }
+          }
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 24, height: 24,
+                  child: Radio<int>(
+                    value: value,
+                    groupValue: selectedRadio,
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() {
+                          selectedRadio = v;
+                          if (selectedRadio == 1) {
+                            int splitAmount = totalAmount ~/ participants.length;
+                            for (var p in participants) {
+                              p['amount'] = splitAmount;
+                            }
+                          }
+                        });
+                      }
+                    },
+                    activeColor: kPrimaryColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
+              ],
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutQuart,
+              alignment: Alignment.topCenter,
+              clipBehavior: Clip.hardEdge,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(left: 36),
+                child: isSelected
+                    ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(description, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                )
+                    : const SizedBox(height: 0),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
