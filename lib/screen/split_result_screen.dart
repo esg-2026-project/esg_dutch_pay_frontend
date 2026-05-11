@@ -265,7 +265,7 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
                 ),
                 if (canEdit) ...[
                   const SizedBox(width: 6),
-                  const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                  const Icon(Icons.edit, size: 18, color: Colors.grey),
                 ]
               ],
             ),

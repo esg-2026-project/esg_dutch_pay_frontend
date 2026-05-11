@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 import '../components/app_layout.dart';
 import '../util/color.dart';
 
-class DepositCheckScreen extends StatelessWidget {
+class DepositCheckScreen extends StatefulWidget {
   const DepositCheckScreen({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _DepositCheckScreenState();
+}
+
+class _DepositCheckScreenState extends State<DepositCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
