@@ -6,12 +6,20 @@ import 'dart:convert';
 @JS('PortOne')
 external JSAny? get portOne; // 여기서 JSAny?로 선언하여 안전하게 가져옵니다.
 
+@JS('window')
+external JSObject get window;
+
+@JS('window.location')
+external JSObject get location;
+
 class PortOneWeb {
   static void requestPayment({
     required int amount,
     required String orderName,
     required Function(Map<String, dynamic>) onResult,
   }) async {
+    final String currentHref = location.getProperty('href'.toJS).toString();
+
     // 1. 결제 데이터 생성
     final paymentData = {
       'storeId': 'store-052e1227-c7a7-45c5-9fa3-2bd1da1a0a49',
@@ -26,6 +34,7 @@ class PortOneWeb {
       'pc': 'IFRAME',
       'mobile': 'REDIRECTION'
       }.jsify(), // 여기서 한 번 더 jsify()를 해주는 것이 안전합니다.
+      'redirectUrl': currentHref
     }.jsify();
 
     try {
