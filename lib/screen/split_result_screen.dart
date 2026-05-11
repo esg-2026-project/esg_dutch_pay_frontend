@@ -17,10 +17,10 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
 
   // 참여자 상태 관리
   List<Map<String, dynamic>> participants = [
-    {'name': '김나영', 'amount': 30000},
-    {'name': '김동현', 'amount': 30000},
-    {'name': '박지민', 'amount': 30000},
-    {'name': '유지호', 'amount': 30000},
+    {'name': '김나영', 'amount': 30000, 'isDone' : true},
+    {'name': '김동현', 'amount': 30000, 'isDone' : false},
+    {'name': '박지민', 'amount': 30000, 'isDone' : true},
+    {'name': '유지호', 'amount': 30000, 'isDone' : true},
   ];
 
 

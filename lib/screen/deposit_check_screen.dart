@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../components/app_layout.dart';
 import '../util/color.dart';
+import '../util/string.dart';
 
 class DepositCheckScreen extends StatefulWidget {
   const DepositCheckScreen({super.key});
@@ -15,6 +16,14 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final participants = ModalRoute.of(context)!.settings.arguments as List<Map<String, dynamic>>;
+
+    // [개선] 하드코딩 대신 실제 데이터 기반으로 진행 상태 계산
+    final int totalCount = participants.length;
+    final int doneCount = participants.where((people) => people['isDone'] == true).length;
+    final bool hasUnpaid = doneCount < totalCount; // 미납자 존재 여부
+    final double progressValue = totalCount > 0 ? doneCount / totalCount : 0.0;
+
     return AppLayout(
       title: '입금 확인',
       child: Padding(
@@ -32,14 +41,22 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('진행 상태', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('진행 상태', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                      // [추가] 미납자가 있을 경우 우측 상단에 텍스트 표시
+                      if (hasUnpaid)
+                        const Text('미납자가 있습니다', style: TextStyle(color: Colors.orange, fontSize: 13, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                   const SizedBox(height: 8),
-                  const Text('3/4명 완료', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: kPrimaryColor)),
+                  Text('$doneCount/$totalCount명 완료', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: kPrimaryColor)),
                   const SizedBox(height: 16),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      value: 0.75,
+                      value: progressValue,
                       backgroundColor: kPrimaryColor.withOpacity(0.1),
                       color: kPrimaryColor,
                       minHeight: 8,
@@ -51,34 +68,25 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
             const SizedBox(height: 24),
             Expanded(
               child: ListView(
-                children: [
-                  _buildDepositRow('김나영', '30,000원', true),
-                  _buildDepositRow('이동욱', '30,000원', true),
-                  _buildDepositRow('최수연', '30,000원', true),
-                  _buildDepositRow('박지민', '30,000원', false),
-                ],
+                children: participants.map((people) {
+                  return _buildDepositRow(people['name'], "${formatCurrency(people['amount'] as int)}원", people['isDone']);
+                }).toList(),
               ),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 54),
-                side: const BorderSide(color: Color(0xFFE0E0E0)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('미납자 알림 보내기', style: TextStyle(color: Colors.black87)),
-            ),
-            const SizedBox(height: 12),
+
+            // [수정] 정산 완료 및 미납자 알림 버튼을 제거하고 '결제하기' 버튼 하나로 통일
             ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                // TODO: 결제 로직 또는 결제 화면 이동 추가
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
                 minimumSize: const Size(double.infinity, 54),
-                elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
-              child: const Text('정산 완료로 마무리', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('결제하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
             ),
           ],
         ),

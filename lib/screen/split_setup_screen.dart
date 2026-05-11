@@ -1,5 +1,6 @@
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/cupertino.dart'; // CupertinoActivityIndicator 사용을 위해 추가
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart'; // 메시지 앱 호출을 위해 추가
@@ -31,25 +32,31 @@ class _SplitSetupScreenState extends State<SplitSetupScreen> {
   }
 
   Future<void> getContacts() async {
-    if (await Permission.contacts.request().isGranted) {
-      // 접근권한을 얻을 시 실행되는 기능
-      var contacts = await ContactsService.getContacts(
-        withThumbnails: false,
-      );
-
-      // 가져온 연락처 목록 변수에 할당 및 초기화
+    if(kIsWeb) {
       setState(() {
-        _contacts = contacts.toList();
-        _filteredContacts = _contacts;
-        _hasPermission = true;
         _isLoading = false;
       });
     } else {
-      // 권한 거부 시
-      setState(() {
-        _hasPermission = false;
-        _isLoading = false;
-      });
+      if (await Permission.contacts.request().isGranted) {
+        // 접근권한을 얻을 시 실행되는 기능
+        var contacts = await ContactsService.getContacts(
+          withThumbnails: false,
+        );
+
+        // 가져온 연락처 목록 변수에 할당 및 초기화
+        setState(() {
+          _contacts = contacts.toList();
+          _filteredContacts = _contacts;
+          _hasPermission = true;
+          _isLoading = false;
+        });
+      } else {
+        // 권한 거부 시
+        setState(() {
+          _hasPermission = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -101,7 +108,7 @@ class _SplitSetupScreenState extends State<SplitSetupScreen> {
   @override
   Widget build(BuildContext context) {
     // 4. 다음으로 넘어가기 조건 (권한이 있고, 1명 이상 선택했을 때만 활성화)
-    bool canGoNext = _hasPermission && _selectedContactIds.isNotEmpty;
+    bool canGoNext = (_hasPermission && _selectedContactIds.isNotEmpty) || kIsWeb;
 
     return AppLayout(
       title: '정산 테이블',
@@ -113,7 +120,7 @@ class _SplitSetupScreenState extends State<SplitSetupScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('참여자 추가', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('참여자 추가', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text(
                   '${_selectedContactIds.length}명 선택',
                   style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold, fontSize: 14),
@@ -164,8 +171,8 @@ class _SplitSetupScreenState extends State<SplitSetupScreen> {
                 // 연락처가 없거나 권한이 없는 경우의 예외 처리 화면
                     ? Center(
                   child: Text(
-                    !_hasPermission ? '연락처 접근 권한이 필요합니다.' : '연락처가 없습니다.',
-                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                    kIsWeb ? '웹 환경에서는 연락처를 가져올 수 없습니다.' : (!_hasPermission ? '연락처 접근 권한이 필요합니다.' : '연락처가 없습니다.'),
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                 )
                     : ListView.separated(

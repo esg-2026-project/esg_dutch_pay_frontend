@@ -36,7 +36,7 @@ class _QrPaymentScreenState extends State<QrPaymentScreen> {
             Padding(
               padding: const EdgeInsets.only(top : 16),
               child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/deposit_check_screen'),
+                onPressed: () => Navigator.pushNamed(context, '/deposit_check_screen', arguments: participants),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
                   minimumSize: const Size(double.infinity, 54),
