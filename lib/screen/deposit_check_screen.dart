@@ -8,6 +8,8 @@ import '../util/color.dart';
 import '../util/payment_web.dart';
 import '../util/string.dart';
 
+import 'package:web/web.dart' as web show window;
+
 class DepositCheckScreen extends StatefulWidget {
   const DepositCheckScreen({super.key});
 
@@ -18,6 +20,42 @@ class DepositCheckScreen extends StatefulWidget {
 class _DepositCheckScreenState extends State<DepositCheckScreen> {
   bool isFailedPayment = false;
   String paymentCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleRedirectResult();
+    });
+  }
+
+  void _handleRedirectResult() {
+    // 1. 해시 앞의 쿼리 파라미터 강제 추출
+    final params = getRawQueryParams();
+
+    final String? paymentId = params['paymentId'];
+    final String? code = params['code']; // 실패 시 포함됨
+
+    if (paymentId != null) {
+      if (code == null) {
+        // [성공] 결과 페이지로 이동
+        // PC에서 이미 처리되었을 수도 있으므로 pushReplacement를 사용합니다.
+        Navigator.pushReplacementNamed(
+            context,
+            '/result',
+            arguments: {'amount': 30000}
+        );
+      } else {
+        setState(() {
+          isFailedPayment = true;
+          paymentCode = code;
+        });
+      }
+
+      // 중요: 처리 후 주소창의 파라미터를 지워야 새로고침 시 다시 결제 로직이 안 돌아갑니다.
+      web.window.history.replaceState(null, '', web.window.location.pathname);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,7 @@
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:convert';
+import 'package:web/web.dart' as web show window;
 
 // 자바스크립트 전역 PortOne 객체 정의
 @JS('PortOne')
@@ -18,7 +19,7 @@ class PortOneWeb {
     required String orderName,
     required Function(Map<String, dynamic>) onResult,
   }) async {
-    final String baseUrl = "${location.getProperty('origin'.toJS)}/#";
+    final String baseOrigin = location.getProperty('origin'.toJS).toString();
 
     // 1. 결제 데이터 생성
     final paymentData = {
@@ -34,7 +35,7 @@ class PortOneWeb {
       'pc': 'IFRAME',
       'mobile': 'REDIRECTION'
       }.jsify(), // 여기서 한 번 더 jsify()를 해주는 것이 안전합니다.
-      'redirectUrl': '$baseUrl/payment-callback'
+      'redirectUrl': baseOrigin
     }.jsify();
 
     try {
@@ -74,3 +75,9 @@ class PortOneWeb {
 // JSON.stringify 선언 시 파라미터 타입을 JSAny로 넓혀줍니다.
 @JS('JSON.stringify')
 external String _stringify(JSAny obj);
+
+Map<String, String> getRawQueryParams() {
+  // web.window.location.search는 "?paymentId=..." 부분을 가져옵니다.
+  final search = web.window.location.search;
+  return Uri.splitQueryString(search.startsWith('?') ? search.substring(1) : search);
+}
