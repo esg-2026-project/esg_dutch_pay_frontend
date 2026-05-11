@@ -13,6 +13,7 @@ import 'package:portone_flutter/v2/model/entity/currency.dart';
 class PortOneScreen extends StatelessWidget {
   const PortOneScreen({super.key});
 
+
   @override
   Widget build(BuildContext context) {
     return AppLayout(
@@ -47,7 +48,10 @@ class PortOneScreen extends StatelessWidget {
             Navigator.pushReplacementNamed(
               context,
               '/result',
-              arguments: response,
+              arguments: {
+                'amount' : 1000,
+                'response' : response
+              },
             );
           },
         )
