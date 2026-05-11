@@ -21,10 +21,11 @@ class PortOneWeb {
       'totalAmount': amount,
       'currency': 'CURRENCY_KRW',
       'payMethod': 'CARD',
+      // windowType을 아예 빼거나, 아래와 같이 가장 단순한 형태로 넣어보세요.
       'windowType': {
-        'pc': 'IFRAME',      // PC일 때 방식
-        'mobile': 'IFRAME'   // 모바일일 때 방식 (REDIRECTION 또는 IFRAME)
-      },
+      'pc': 'IFRAME',
+      'mobile': 'REDIRECTION'
+      }.jsify(), // 여기서 한 번 더 jsify()를 해주는 것이 안전합니다.
     }.jsify();
 
     try {
