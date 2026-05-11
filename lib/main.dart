@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screen/deposit_check_screen.dart';
 import 'package:frontend/screen/landing_screen.dart';
+import 'package:frontend/screen/payment/identity_verification.dart';
+import 'package:frontend/screen/payment/payment_callback_screen.dart';
+import 'package:frontend/screen/payment/port_one_screen.dart';
 import 'package:frontend/screen/payment_success_screen.dart';
-import 'package:frontend/screen/portone/identity_verification.dart';
-import 'package:frontend/screen/portone/port_one_screen.dart';
 import 'package:frontend/screen/qr_code_scan_screen.dart';
 import 'package:frontend/screen/qr_payment_screen.dart';
 import 'package:frontend/screen/remittance_request_screen.dart';
@@ -38,6 +39,7 @@ class DutchPaymentService extends StatelessWidget {
         '/split_result': (context) => const SplitResultScreen(),
         '/port_one': (context) => const PortOneScreen(),
         '/result': (context) => const PaymentResultScreen(),
+        '/payment-callback': (context) => const PaymentCallbackScreen(),
         '/identity_verification': (context) => const IdentityVerification()
       },
       debugShowCheckedModeBanner: false,

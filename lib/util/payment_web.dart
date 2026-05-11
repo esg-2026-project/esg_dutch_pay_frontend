@@ -18,7 +18,7 @@ class PortOneWeb {
     required String orderName,
     required Function(Map<String, dynamic>) onResult,
   }) async {
-    final String currentHref = location.getProperty('href'.toJS).toString();
+    final String baseUrl = "${location.getProperty('origin'.toJS)}/#";
 
     // 1. 결제 데이터 생성
     final paymentData = {
@@ -34,7 +34,7 @@ class PortOneWeb {
       'pc': 'IFRAME',
       'mobile': 'REDIRECTION'
       }.jsify(), // 여기서 한 번 더 jsify()를 해주는 것이 안전합니다.
-      'redirectUrl': currentHref
+      'redirectUrl': '$baseUrl/payment-callback'
     }.jsify();
 
     try {
