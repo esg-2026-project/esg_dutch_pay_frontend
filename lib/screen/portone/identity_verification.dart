@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/components/app_layout.dart';
 
@@ -20,9 +21,9 @@ class IdentityVerification extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                Padding(padding: EdgeInsets.symmetric(vertical: 15)),
-                Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 20)),
+                CupertinoActivityIndicator(radius: 16),
+                Padding(padding: EdgeInsets.symmetric(vertical: 16)),
+                Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 14)),
               ],
             ),
           ),
