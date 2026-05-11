@@ -77,9 +77,7 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
 
             // [수정] 정산 완료 및 미납자 알림 버튼을 제거하고 '결제하기' 버튼 하나로 통일
             ElevatedButton(
-              onPressed: () {
-                // TODO: 결제 로직 또는 결제 화면 이동 추가
-              },
+              onPressed: () => Navigator.pushNamed(context, '/port_one'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
                 minimumSize: const Size(double.infinity, 54),
