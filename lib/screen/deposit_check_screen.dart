@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../components/app_layout.dart';
 import '../util/color.dart';
+import '../util/payment_web.dart';
 import '../util/string.dart';
 
 class DepositCheckScreen extends StatefulWidget {
@@ -77,7 +79,22 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
 
             // [수정] 정산 완료 및 미납자 알림 버튼을 제거하고 '결제하기' 버튼 하나로 통일
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/port_one'),
+              onPressed: () {
+                if (kIsWeb) {
+                  PortOneWeb.requestPayment(
+                    amount: 1000,
+                    orderName: '정산 결제 테스트',
+                    onResult: (result) {
+                      print("결제 결과: $result");
+                      // 결과에 따라 성공 페이지로 이동
+                      Navigator.pushNamed(context, '/result', arguments: result);
+                    },
+                  );
+                } else {
+                  // 모바일인 경우 기존 PortOneScreen으로 이동
+                  Navigator.pushNamed(context, '/portone');
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
                 minimumSize: const Size(double.infinity, 54),
