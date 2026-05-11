@@ -16,25 +16,25 @@ class PortOneScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final participant = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+
     return AppLayout(
         title: "결제",
         child: PortonePayment(
           /* 웹뷰 로딩 컴포넌트 */
-          initialChild: Container(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CupertinoActivityIndicator(radius: 16),
-                  Padding(padding: EdgeInsets.symmetric(vertical: 16)),
-                  Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 14)),
-                ],
-              ),
+          initialChild: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CupertinoActivityIndicator(radius: 16),
+                Padding(padding: EdgeInsets.symmetric(vertical: 16)),
+                Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 14)),
+              ],
             ),
           ),
           /* [필수입력] 결제 데이터 */
           data: PaymentRequest(
-            storeId: 'iamporttest_3',                                      // 상점 ID
+            storeId: 'store-052e1227-c7a7-45c5-9fa3-2bd1da1a0a49',                                      // 상점 ID
             channelKey: 'channel-key-2f02b625-3d2b-4fa8-80f7-ca61e56ca37a',                                // 채널 키
             payMethod: PaymentPayMethod.CARD,                              // 결제수단
             orderName: '결제 테스트',                                // 주문명

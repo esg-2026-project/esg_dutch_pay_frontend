@@ -53,7 +53,11 @@ class PortOneWeb {
 
       if (response != null) {
         final String jsonString = _stringify(response);
-        onResult(jsonDecode(jsonString));
+        onResult({
+          'code' : 'SUCCESS',
+          'info' : jsonDecode(jsonString),
+          'amount' : amount
+        });
       } else {
         onResult({'code': 'FAILURE', 'message': '응답값이 없습니다.'});
       }

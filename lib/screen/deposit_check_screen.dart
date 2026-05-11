@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../components/app_layout.dart';
+import '../components/warn_components.dart';
 import '../util/color.dart';
 import '../util/payment_web.dart';
 import '../util/string.dart';
@@ -15,10 +16,13 @@ class DepositCheckScreen extends StatefulWidget {
 }
 
 class _DepositCheckScreenState extends State<DepositCheckScreen> {
+  bool isFailedPayment = false;
+  String paymentCode = '';
 
   @override
   Widget build(BuildContext context) {
     final participants = ModalRoute.of(context)!.settings.arguments as List<Map<String, dynamic>>;
+    final myStatus = participants.firstWhere((people) => people['isOwner']);
 
     // [개선] 하드코딩 대신 실제 데이터 기반으로 진행 상태 계산
     final int totalCount = participants.length;
@@ -67,7 +71,11 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            if (isFailedPayment) ...[
+              const SizedBox(height: 16,),
+              WarnComponents(text: '결제에 실패했습니다.')
+            ],
+            const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: participants.map((people) {
@@ -82,12 +90,21 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
               onPressed: () {
                 if (kIsWeb) {
                   PortOneWeb.requestPayment(
-                    amount: 1000,
-                    orderName: '정산 결제 테스트',
+                    amount: myStatus['amount'],
+                    orderName: '정산 결제',
                     onResult: (result) {
-                      print("결제 결과: $result");
-                      // 결과에 따라 성공 페이지로 이동
-                      Navigator.pushNamed(context, '/result', arguments: result);
+                      if((result['code'] as String).contains('FAILURE')) {
+                        setState(() {
+                          isFailedPayment = true;
+                          paymentCode = result['code'];
+                        });
+                      } else {
+                        // 결과에 따라 성공 페이지로 이동
+                        setState(() {
+                          myStatus['isDone'] = true;
+                        });
+                        Navigator.pushNamed(context, '/result', arguments: result);
+                      }
                     },
                   );
                 } else {

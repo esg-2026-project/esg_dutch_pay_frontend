@@ -29,7 +29,7 @@ class _QrPaymentScreenState extends State<QrPaymentScreen> {
             Expanded(
               child: ListView(
                 children: participants.map((element) {
-                  return _buildQrCard(element['name'], "${formatCurrency(element['amount'] as int)}원");
+                  return _buildQrCard(element['name'], "${formatCurrency(element['amount'] as int)}원", element['isOwner']);
                 }).toList(),
               ),
             ),
@@ -65,7 +65,7 @@ class _QrPaymentScreenState extends State<QrPaymentScreen> {
     );
   }
 
-  Widget _buildQrCard(String name, String amount) {
+  Widget _buildQrCard(String name, String amount, bool isOwner) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -91,7 +91,7 @@ class _QrPaymentScreenState extends State<QrPaymentScreen> {
               ],
             ),
           ),
-          const Icon(Icons.qr_code_2, size: 40, color: Colors.black87),
+          isOwner ? Container() : const Icon(Icons.qr_code_2, size: 40, color: Colors.black87),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/components/warn_components.dart';
 
 import '../components/app_layout.dart';
 import '../util/color.dart';
@@ -13,20 +14,23 @@ class SplitResultScreen extends StatefulWidget {
 
 class _SplitResultScreenState extends State<SplitResultScreen> {
   int selectedRadio = 1;
-  final int totalAmount = 120000; // 총 결제 금액 고정값
 
   // 참여자 상태 관리
   List<Map<String, dynamic>> participants = [
-    {'name': '김나영', 'amount': 30000, 'isDone' : true},
-    {'name': '김동현', 'amount': 30000, 'isDone' : false},
-    {'name': '박지민', 'amount': 30000, 'isDone' : true},
-    {'name': '유지호', 'amount': 30000, 'isDone' : true},
+    {'name': '나', 'amount' : 30000, 'isDone' : false, 'isOwner' : true},
+    {'name': '김나영', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
+    {'name': '김동현', 'amount': 30000, 'isDone' : false, 'isOwner' : false},
+    {'name': '박지민', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
+    {'name': '유지호', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
   ];
+
+  int totalAmount = 0;
 
 
   @override
   Widget build(BuildContext context) {
     // [추가] 현재 입력된 금액의 합 계산
+    totalAmount = participants.map((p) => p['amount'] as int).toList().reduce((sum, amount) => sum + amount);
     int currentSum = participants.fold(0, (sum, p) => sum + (p['amount'] as int));
 
     // [추가] 직접 입력 모드이면서, 총합이 맞지 않을 때 에러 상태
@@ -111,34 +115,16 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
                   ...participants.map((person) => _buildResultRow(
                       person['name'],
                       person['amount'],
+                      isOwner: person['isOwner'],
                       canEdit: selectedRadio == 2
-                  )).toList(),
+                  )),
 
                   // [핵심 추가] 에러 발생 시 붉은색 알림 박스 표시
                   if (isError) ...[
                     const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50, // 연한 붉은 배경
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade100),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade400, size: 22),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              diff > 0
-                                  ? '총 금액보다 ${formatCurrency(diff)}원 부족합니다.'
-                                  : '총 금액보다 ${formatCurrency(diff.abs())}원 초과되었습니다.',
-                              style: TextStyle(color: Colors.red.shade700, fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    WarnComponents(text: diff > 0
+                        ? '총 금액보다 ${formatCurrency(diff)}원 부족합니다.'
+                        : '총 금액보다 ${formatCurrency(diff.abs())}원 초과되었습니다.',)
                   ]
                 ],
               ),
@@ -241,7 +227,7 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
   }
 
   // 행 구성
-  Widget _buildResultRow(String name, int amount, {bool canEdit = false}) {
+  Widget _buildResultRow(String name, int amount, {bool isOwner = false, bool canEdit = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(

@@ -11,7 +11,7 @@ class PaymentResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // 결제 결과 데이터를 받아옵니다 (전달된 경우)
     final result = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
-    final String amount = formatCurrency(result['amount']);
+    final String amount = formatCurrency(result['amount'] ?? 0);
 
     return AppLayout(
       title: '결제 완료',
@@ -24,19 +24,19 @@ class PaymentResultScreen extends StatelessWidget {
             // 1. 성공 아이콘 (그린 체크)
             const Icon(
               Icons.check_circle_rounded,
-              color: Color(0xFF4CAF50),
-              size: 100,
+              color: kPrimaryColor,
+              size: 72,
             ),
             const SizedBox(height: 24),
             // 2. 주 메시지
             const Text(
               '결제가 완료되었습니다!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
               '정산 내역이 성공적으로 업데이트되었습니다.',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 40),
             // 3. 결제 상세 정보 카드 (기존 디자인 스타일 유지)
@@ -50,17 +50,17 @@ class PaymentResultScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _buildInfoRow('결제 금액', '$amount원', isBold: true),
-                  const Divider(height: 32),
-                  _buildInfoRow('결제 수단', '토스페이 / 카드'),
+                  const Divider(height: 32, color: Color(0xFFE8E8E8),),
+                  _buildInfoRow('결제 수단', '토스페이'),
                   const SizedBox(height: 12),
-                  _buildInfoRow('결제 일시', '2024.05.12 14:30'),
+                  _buildInfoRow('결제 일시', formatCurrentDate()),
                 ],
               ),
             ),
             const Spacer(),
             // 4. 확인 버튼 (홈으로 이동)
             ElevatedButton(
-              onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+              onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
                 minimumSize: const Size(double.infinity, 54),
