@@ -21,6 +21,10 @@ class PortOneWeb {
       'totalAmount': amount,
       'currency': 'CURRENCY_KRW',
       'payMethod': 'CARD',
+      'windowType': {
+        'pc': 'IFRAME',      // PC일 때 방식
+        'mobile': 'IFRAME'   // 모바일일 때 방식 (REDIRECTION 또는 IFRAME)
+      },
     }.jsify();
 
     try {
