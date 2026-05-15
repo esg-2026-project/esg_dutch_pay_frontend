@@ -79,10 +79,17 @@ class PortOneWeb {
 external String _stringify(JSAny obj);
 
 Map<String, String> getRawQueryParams() {
-  // web.window.location.search는 ?부터 # 전까지를 가져옵니다.
-  final String search = web.window.location.search;
-  if (search.isEmpty) return {};
+  final String href = web.window.location.href;
+  final uri = Uri.parse(href.replaceFirst('/#', '')); // 해시 라우팅 대응
 
-  final String query = search.startsWith('?') ? search.substring(1) : search;
-  return Uri.splitQueryString(query);
+  // 전체 URL에서 쿼리 파라미터만 추출
+  Map<String, String> params = Map.from(uri.queryParameters);
+
+  // 만약 Uri 파싱으로 안 잡히는 경우(해시 앞에 ?가 있는 경우) 강제 추출
+  if (params.isEmpty && href.contains('?')) {
+    final String queryString = href.split('?')[1].split('#')[0];
+    params = Uri.splitQueryString(queryString);
+  }
+
+  return params;
 }

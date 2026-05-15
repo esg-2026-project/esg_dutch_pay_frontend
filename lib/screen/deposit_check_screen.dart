@@ -37,27 +37,40 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
     final String? paymentId = params['paymentId'];
     final String? code = params['code'];
 
+    // 결제 정보가 있을 때만 실행
     if (paymentId != null) {
       if (code == null) {
-        // 성공 시 결과 페이지로 이동 (금액 정보 등은 localStorage에서 가져와도 됨)
-        Navigator.pushReplacementNamed(
+        // 성공 시 결과 페이지로 이동
+        // 여기서 잠시 딜레이를 주어 청소 로직이 먼저 작동하게 할 수도 있습니다.
+        Future.delayed(Duration.zero, () {
+          Navigator.pushReplacementNamed(
             context,
             '/result',
-            arguments: {'amount': 30000}
-        );
+            arguments: {'amount': 30000},
+          );
+        });
       } else {
-        // 실패 시 이 화면에 머물며 에러 표시
         setState(() {
           isFailedPayment = true;
           paymentCode = code;
         });
       }
 
-      final String newUrl = web.window.location.href.split('?')[0] + web.window.location.hash;
-      web.window.history.replaceState(null, '', newUrl);
+      // [중요] 주소창에서 쿼리 파라미터를 완전히 제거
+      // HTML5 History API를 사용하여 사용자에게 보이는 URL을 변경합니다.
+      try {
+        final String origin = web.window.location.origin;
+        final String hash = web.window.location.hash; // #/deposit_check_screen 등
+
+        // 파라미터(?)가 빠진 깨끗한 URL 생성
+        final String newUrl = "$origin/$hash";
+        web.window.history.replaceState(null, '', newUrl);
+      } catch (e) {
+        print("URL cleaning error: $e");
+      }
     }
   }
-
+  
   List<Map<String, dynamic>> getParticipants(Object? args) {
     List<Map<String, dynamic>> participants = [];
     // 2. 데이터 복구 로직
