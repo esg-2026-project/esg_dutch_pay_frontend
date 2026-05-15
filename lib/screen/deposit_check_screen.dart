@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,36 +33,58 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
   }
 
   void _handleRedirectResult() {
-    // 1. 해시 앞의 쿼리 파라미터 강제 추출
     final params = getRawQueryParams();
-
     final String? paymentId = params['paymentId'];
-    final String? code = params['code']; // 실패 시 포함됨
+    final String? code = params['code'];
 
     if (paymentId != null) {
       if (code == null) {
-        // [성공] 결과 페이지로 이동
-        // PC에서 이미 처리되었을 수도 있으므로 pushReplacement를 사용합니다.
+        // 성공 시 결과 페이지로 이동 (금액 정보 등은 localStorage에서 가져와도 됨)
         Navigator.pushReplacementNamed(
             context,
             '/result',
             arguments: {'amount': 30000}
         );
       } else {
+        // 실패 시 이 화면에 머물며 에러 표시
         setState(() {
           isFailedPayment = true;
           paymentCode = code;
         });
       }
 
-      // 중요: 처리 후 주소창의 파라미터를 지워야 새로고침 시 다시 결제 로직이 안 돌아갑니다.
-      web.window.history.replaceState(null, '', web.window.location.pathname);
+      // 처리 후 URL 파라미터 청소 (다시 새로고침 시 로직 중복 방지)
+      web.window.history.replaceState(null, '', web.window.location.pathname + web.window.location.hash);
     }
+  }
+
+  List<Map<String, dynamic>> getParticipants(Object? args) {
+    List<Map<String, dynamic>> participants = [];
+    // 2. 데이터 복구 로직
+    if (args != null) {
+      // 정상적으로 화면에 진입한 경우 (결제 전)
+      participants = args as List<Map<String, dynamic>>;
+      // 모바일 결제 이탈을 대비해 브라우저 로컬 스토리지에 데이터를 백업해 둡니다.
+      web.window.localStorage.setItem('backup_participants', jsonEncode(participants));
+    } else {
+      // 리다이렉트로 돌아와서 args가 null이 된 경우 (결제 후)
+      final savedData = web.window.localStorage.getItem('backup_participants');
+
+      if (savedData != null) {
+        // 로컬 스토리지에서 백업 데이터를 꺼내서 복구합니다.
+        final List<dynamic> decodedList = jsonDecode(savedData);
+        participants = decodedList.map((e) => Map<String, dynamic>.from(e)).toList();
+      } else {
+        // 백업 데이터마저 없다면 (비정상 접근 등) 안전하게 에러 화면이나 로딩 띄우기
+        return List.empty();
+      }
+    }
+    return participants;
   }
 
   @override
   Widget build(BuildContext context) {
-    final participants = ModalRoute.of(context)!.settings.arguments as List<Map<String, dynamic>>;
+    final participants = getParticipants(ModalRoute.of(context)!.settings.arguments);
     final myStatus = participants.firstWhere((people) => people['isOwner']);
 
     // [개선] 하드코딩 대신 실제 데이터 기반으로 진행 상태 계산
@@ -131,10 +156,11 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
                     amount: myStatus['amount'],
                     orderName: '정산 결제',
                     onResult: (result) {
-                      if((result['code'] as String).contains('FAILURE')) {
+                      print("result : ${result}");
+                      if((result['info']['code'] as String).contains('FAILURE')) {
                         setState(() {
                           isFailedPayment = true;
-                          paymentCode = result['code'];
+                          paymentCode = result['info']['code'];
                         });
                       } else {
                         // 결과에 따라 성공 페이지로 이동

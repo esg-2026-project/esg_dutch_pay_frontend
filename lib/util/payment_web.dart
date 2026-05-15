@@ -20,6 +20,8 @@ class PortOneWeb {
     required Function(Map<String, dynamic>) onResult,
   }) async {
     final String baseOrigin = location.getProperty('origin'.toJS).toString();
+    // 성공/실패 시 돌아올 경로를 'deposit_check_screen'으로 강제 고정
+    final String redirectTarget = "$baseOrigin/#/deposit_check_screen";
 
     // 1. 결제 데이터 생성
     final paymentData = {
@@ -35,7 +37,7 @@ class PortOneWeb {
       'pc': 'IFRAME',
       'mobile': 'REDIRECTION'
       }.jsify(), // 여기서 한 번 더 jsify()를 해주는 것이 안전합니다.
-      'redirectUrl': baseOrigin
+      'redirectUrl': redirectTarget
     }.jsify();
 
     try {
