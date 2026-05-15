@@ -53,8 +53,8 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
         });
       }
 
-      // 처리 후 URL 파라미터 청소 (다시 새로고침 시 로직 중복 방지)
-      web.window.history.replaceState(null, '', web.window.location.pathname + web.window.location.hash);
+      final String newUrl = web.window.location.href.split('?')[0] + web.window.location.hash;
+      web.window.history.replaceState(null, '', newUrl);
     }
   }
 
@@ -75,7 +75,7 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
         final List<dynamic> decodedList = jsonDecode(savedData);
         participants = decodedList.map((e) => Map<String, dynamic>.from(e)).toList();
       } else {
-        // 백업 데이터마저 없다면 (비정상 접근 등) 안전하게 에러 화면이나 로딩 띄우기
+        // 백업 데이터마저 없다면 빈 리스트 반환
         return List.empty();
       }
     }
@@ -84,14 +84,26 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final participants = getParticipants(ModalRoute.of(context)!.settings.arguments);
+    // [수정] 강제 Unwrapping(!)을 방지하기 위해 ?를 사용합니다.
+    final participants = getParticipants(ModalRoute.of(context)?.settings.arguments);
+
+    // 데이터가 유실되었을 경우 안전망
+    if (participants.isEmpty) {
+      return const Scaffold(body: Center(child: CupertinoActivityIndicator()));
+    }
+
     final myStatus = participants.firstWhere((people) => people['isOwner']);
 
-    // [개선] 하드코딩 대신 실제 데이터 기반으로 진행 상태 계산
+    // 진행 상태 계산
     final int totalCount = participants.length;
     final int doneCount = participants.where((people) => people['isDone'] == true).length;
     final bool hasUnpaid = doneCount < totalCount; // 미납자 존재 여부
     final double progressValue = totalCount > 0 ? doneCount / totalCount : 0.0;
+
+    // [추가] 방장(isOwner)을 제외한 나머지 모든 인원이 결제를 완료했는지 체크
+    final bool canOwnerPay = participants
+        .where((people) => people['isOwner'] != true)
+        .every((people) => people['isDone'] == true);
 
     return AppLayout(
       title: '입금 확인',
@@ -114,7 +126,6 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('진행 상태', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                      // [추가] 미납자가 있을 경우 우측 상단에 텍스트 표시
                       if (hasUnpaid)
                         const Text('미납자가 있습니다', style: TextStyle(color: Colors.orange, fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
@@ -139,31 +150,53 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
               WarnComponents(text: '결제에 실패했습니다.')
             ],
             const SizedBox(height: 16),
+
+            // [수정] ListView 대신 CustomScrollView와 CupertinoSliverRefreshControl 적용
             Expanded(
-              child: ListView(
-                children: participants.map((people) {
-                  return _buildDepositRow(people['name'], "${formatCurrency(people['amount'] as int)}원", people['isDone']);
-                }).toList(),
+              child: CustomScrollView(
+                // iOS처럼 항상 스크롤 가능하게 해야 당겨서 새로고침이 동작합니다.
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                slivers: [
+                  CupertinoSliverRefreshControl(
+                    onRefresh: () async {
+                      // TODO: 여기에 서버에서 최신 결제 상태를 불러오는 API 호출 로직을 넣으세요.
+                      await Future.delayed(const Duration(seconds: 1));
+                      setState(() {
+                        // API 결과를 받아 participants 상태를 갱신
+                      });
+                    },
+                  ),
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      participants.map((people) {
+                        return _buildDepositRow(
+                            people['name'],
+                            "${formatCurrency(people['amount'] as int)}원",
+                            people['isDone']
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // [수정] 정산 완료 및 미납자 알림 버튼을 제거하고 '결제하기' 버튼 하나로 통일
+            // 결제하기 버튼
             ElevatedButton(
-              onPressed: () {
+              // [수정] canOwnerPay가 true일 때만 함수를 할당하여 활성화, 아니면 null을 주어 비활성화
+              onPressed: canOwnerPay ? () {
                 if (kIsWeb) {
                   PortOneWeb.requestPayment(
                     amount: myStatus['amount'],
                     orderName: '정산 결제',
                     onResult: (result) {
-                      print("result : ${result}");
                       if((result['info']['code'] as String).contains('FAILURE')) {
                         setState(() {
                           isFailedPayment = true;
                           paymentCode = result['info']['code'];
                         });
                       } else {
-                        // 결과에 따라 성공 페이지로 이동
                         setState(() {
                           myStatus['isDone'] = true;
                         });
@@ -172,17 +205,25 @@ class _DepositCheckScreenState extends State<DepositCheckScreen> {
                     },
                   );
                 } else {
-                  // 모바일인 경우 기존 PortOneScreen으로 이동
                   Navigator.pushNamed(context, '/portone');
                 }
-              },
+              } : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
+                disabledBackgroundColor: Colors.grey[300], // 비활성화 시 배경색
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
-              child: const Text('결제하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+              child: Text(
+                // [수정] 상태에 따라 버튼 텍스트 변경
+                  canOwnerPay ? '결제하기' : '다른 인원 결제 대기중',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: canOwnerPay ? Colors.white : Colors.grey[400],
+                  )
+              ),
             ),
           ],
         ),

@@ -79,7 +79,10 @@ class PortOneWeb {
 external String _stringify(JSAny obj);
 
 Map<String, String> getRawQueryParams() {
-  // web.window.location.search는 "?paymentId=..." 부분을 가져옵니다.
-  final search = web.window.location.search;
-  return Uri.splitQueryString(search.startsWith('?') ? search.substring(1) : search);
+  // web.window.location.search는 ?부터 # 전까지를 가져옵니다.
+  final String search = web.window.location.search;
+  if (search.isEmpty) return {};
+
+  final String query = search.startsWith('?') ? search.substring(1) : search;
+  return Uri.splitQueryString(query);
 }

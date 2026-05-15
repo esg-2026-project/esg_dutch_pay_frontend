@@ -19,7 +19,7 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
   List<Map<String, dynamic>> participants = [
     {'name': '나', 'amount' : 30000, 'isDone' : false, 'isOwner' : true},
     {'name': '김나영', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
-    {'name': '김동현', 'amount': 30000, 'isDone' : false, 'isOwner' : false},
+    {'name': '김동현', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
     {'name': '박지민', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
     {'name': '유지호', 'amount': 30000, 'isDone' : true, 'isOwner' : false},
   ];
