@@ -31,7 +31,10 @@ class PortOneWeb {
       'orderName': orderName,
       'totalAmount': amount,
       'currency': 'CURRENCY_KRW',
-      'payMethod': 'CARD',
+      'payMethod': 'EASY_PAY',
+      'easyPay': {
+        'easyPayProvider': 'TOSSPAY'
+      }.jsify(),
       // windowType을 아예 빼거나, 아래와 같이 가장 단순한 형태로 넣어보세요.
       'windowType': {
       'pc': 'IFRAME',
